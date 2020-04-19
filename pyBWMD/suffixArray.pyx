@@ -19,8 +19,10 @@ cdef int leq3(int a1, int a2, int a3,   int b1, int b2, int b3):
     return (a1 < b1 or (a1 == b1 and leq(a2,a3, b2,b3)))
 
 # stably sort a[0..n-1] to b[0..n-1] with keys in 0..K from r
-@cython.boundscheck(False)
-@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+@cython.initializedcheck(False)
+@cython.cdivision(True)
 cdef void radixPass(int* a, int* b, int* r, int n, int K):
     # count occurrences
     cdef int* c = <int *>malloc((K+1) * cython.sizeof(int)) # counter array
@@ -50,8 +52,10 @@ cdef void radixPass(int* a, int* b, int* r, int n, int K):
 
 # find the suffix array SA of s[0..n-1] in {1..K}^n
 # require s[n]=s[n+1]=s[n+2]=0, n>=2
-@cython.boundscheck(False)
-@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+@cython.initializedcheck(False)
+@cython.cdivision(True)
 cdef void suffixArray(int* s, int* SA, int n, int K):
     cdef int n0=(n+2)/3
     cdef int n1=(n+1)/3
@@ -181,13 +185,16 @@ cdef void suffixArray(int* s, int* SA, int n, int K):
     
     return
     
-@cython.boundscheck(False)
-@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+@cython.initializedcheck(False)
+@cython.cdivision(True)
 def bytes_to_raw_vec(const unsigned char[:] input_bytes, unsigned int alphabet_size):
     
     cdef int L =  len(input_bytes)
     cdef int* s = <int *>malloc((L+3) * cython.sizeof(int))
     cdef int* SA = <int *>malloc(L * cython.sizeof(int))
+    cdef unsigned char* raw_input = &input_bytes[0]
     
     cdef int pos = 0
     cdef unsigned char c
@@ -195,11 +202,9 @@ def bytes_to_raw_vec(const unsigned char[:] input_bytes, unsigned int alphabet_s
     cdef int prev_val
     cdef int cur_val
 
-    pos = 0
-    for c in input_bytes:
-        s[pos] = <int>c
-        pos += 1
-    s[pos] = s[pos+1] = s[pos+2] = 0
+    for pos in range(L):
+        s[pos] = raw_input[pos]
+    s[L] = s[L+1] = s[L+2] = 0
     
     suffixArray(s, SA, L, alphabet_size)
     
